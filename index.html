@@ -1,101 +1,120 @@
 <html>
 <head>
 	<script>
-		Library.fn = {}; // public methods
+
+		// ***********
+		// LIBRARY
+		// ***********
+
+ 		// Public methods
+		Library.fn = {};
+		// Set a public method *and* ensure that the function's this will always refer to Library instancees will use the proper 'this'
+		Library.register = function(fnName, fn) {
+			if (fn) {
+				Library.fn[fnName] = fn;
+			}
+			var func = Library.fn[fnName];
+			Library.fn[fnName] = function() { 
+				console.log("THIS", this);
+				console.log(this.constructor);
+				return func.apply(this._all(), arguments);
+			};
+		}
 		function Library() {
 
 			// Private variables and functions
 			var privates = {
 				_abc : 5,
+				_setabc : function(number) {
+					this._abc = number;
+				},
 				_func : function() {},
 				_publics : function() { return publics; },
-				_privates : function() { return privates; }
+				_privates : function() { return privates; },
+				_all : function() { return all; }
 			};
 
 			// Extend publics with what is already set via the outside
 			var publics = {
 				func1 : function() {},
 				chainable : function() { return this._publics(); },
-				// Bind .fn function to this specific instance
-				register : function(fnName, fn) {
-					if (fn) {
-						Library.fn[fnName] = fn;
-					}
-					var func = Library.fn[fnName];
-					Library.fn[fnName] = function() { 
-						return func.apply(all, arguments);
-					};
-				}
 			};
 			publics = extend(publics,Library.fn);
 			
 			// Create object that contains publics and privates
 			var all = extend(privates,publics);
 			
-			// Set publics+privates object as 'this' for all public functions
-			/*
+			// Set publics+privates object as 'this' for all public functions		
 			for(var index in publics) {
-				if (publics.hasOwnProperty(index) && typeof publics[index] === "function") {
+				if (typeof publics[index] === "function") {
+					// This sets the new function on the actual publics object, and not any prototype, which is what we want
 					publics[index] = publics[index].bind(all);
 				}
-			}*/
-			var proto = publics;
-			while(proto) {
-				for(var index in proto) {
-					if (proto.hasOwnProperty(index) && typeof proto[index] === "function") {
-						var func = proto[index];
-						proto[index] = function() { 
-							return func.apply(all, arguments);
-						};
-						//proto[index] = proto[index].bind(all);
-					}
-				}
-				proto = Object.getPrototypeOf(proto);
 			}
-
-			// Place setter on the Library.fn object, to ensure a proper 'this' within those functions
-			Library.fn.__defineSetter__("IDontWantToSpecifyAProperty", function(key,val) {
-				console.log("SET!",key,val);
-			});
 			
 			// Helper function to extend Object original with all properties from Object extra
 			function extend(original, extra) {
-				// - All functions are copied. Hopefully, browsers are efficient in this
-				for(var index in extra) {
-					original[index] = extra[index];
-				}
-				/*
-				// + Functions are not copied on every instantiation of the library
-				// - Any function can only be bound to 1 instance of 'all', which is not what we want
-				original.__proto__ = extra;
-				*/
-				return original;
+				var funcNew = function() {
+					for(var index in original) {
+						this[index] = original[index];
+					}
+				};
+				funcNew.prototype = extra;
+				return new funcNew();
 			}
 
 			// Return facade
 			return publics;
 		}
 
+		// ***********
+		// TEST
+		// ***********
+
+		function assert(a,b) {
+			if (a === b) {
+				return {result:true};
+			} else {
+				return {result:false, message:"first value was expected to be " + JSON.stringify(b) + " but was actually " + JSON.stringify(a)};
+			}
+		}
+
+		function test(a,b,message) {
+			message = message || "TEST";
+			var result = assert(a,b);
+			if (result.result) {
+				console.log(message,"PASS");
+			} else {
+				console.log(message, result.message)
+			}
+		}
 
 		// Accessing privates from external does not work
 		var lib = new Library();
-		console.log(lib._abc); // undefined
-		console.log(lib._func); // undefined
-		console.log(lib.func1); // function() {} 
+		test(lib._abc, undefined);
+		test(lib._func, undefined);
+		test(lib.func1, function(){});
 		console.log(lib.chainable());  // function() {}
 
 		// Accessing privates from within functions works as expected
 		Library.fn.doSomething = function() {
-			console.log(this._abc); // 5
+			console.log("DOSOMETHING");
+			console.log("_ABC_5", this._abc); // 5
+			this._setabc(10);
+			console.log("_ABC_10", this._abc); // 5
 			console.log(this._func); // function() {}
 			console.log(this.func1); // function() {}
 			console.log(this.chainable().func1);  // function() {}
-			console.log(this.chainable()._abc); // undefined
+			console.log("CHAINABLE._ABC", this.chainable()._abc); // undefined
 		}
+		Library.register("doSomething");
 		var lib2 = new Library();
 		lib2.doSomething();
 		// Show public properties
-		console.log(lib2);
+		console.log("PUBLIC", lib2);
+
+		// Is the new function accessible through the prototype chain?
+		lib.doSomething();
 
 	</script>
 	<body>
