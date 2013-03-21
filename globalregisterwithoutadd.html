@@ -116,7 +116,9 @@
 		Library.fn.doSomething = function(num) {
 			console.log("DOSOMETHING");
 			console.log("_ABC_5", this._abc); // 5
-			this._setabc(num);
+			if (num) {
+				this._setabc(num);
+			}
 			console.log("_ABC_10", this._abc); // 5
 			console.log(this._func); // function() {}
 			console.log(this.func1); // function() {}
@@ -132,6 +134,9 @@
 		// Is the new function accessible through the prototype chain?
 		lib.doSomething(20,30);
 		console.log("PUBLIC LIB", lib);
+
+		lib2.doSomething();
+		console.log("PUBLIC LIB2", lib2);
 
 	</script>
 	<body>

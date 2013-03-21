@@ -1,0 +1,38 @@
+ <html>
+<head>
+	<script src='js/BaseLibrary.js'></script>
+	<script>
+
+		// ***********
+		// LIBRARY
+		// ***********
+
+ 		// Public methods
+		Library.fn = {};
+		function Library() {
+
+			var variables = {
+				// Private variables and functions
+				privates : {
+					_publics : function() { return variables.publics; }
+				},
+				// Public methods
+				publics : {
+					chainable : function() { return this._publics(); }
+				}
+			}
+			
+			// Run init function
+			this.init(variables,Library.fn);
+
+			// Return facade
+			return variables.publics;
+		}
+
+		Library.prototype.init = BaseLibrary.init;
+
+	</script>
+	<body>
+		_wm
+	</body>
+</html>

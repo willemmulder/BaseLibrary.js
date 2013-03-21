@@ -1,0 +1,70 @@
+ <html>
+<head>
+	<script src='js/BaseLibrary.js'></script>
+	<script>
+
+		// ***********
+		// LIBRARY
+		// ***********
+
+ 		// Public methods
+		Library.fn = {};
+		function Library() {
+
+			
+			var variables = {
+
+				// Private variables and functions
+				privates : {
+					_test : 5,
+					_settest : function(number) {
+						this._test = number;
+					},
+					_publics : function() { return variables.publics; },
+					//_privates : function() { return variables.privates; },
+					//_all : function() { return all; }
+				},
+
+				// Public functions
+				publics : {
+					chainable : function() { return this._publics(); },
+					test : function(){}
+				}
+
+			}
+			
+			// Run init function
+			this.init(variables,Library.fn);
+
+			// Return facade
+			return variables.publics;
+		}
+
+		Library.prototype.init = BaseLibrary.init;
+
+		// ***********
+		// TEST
+		// ***********
+
+		// Accessing privates from external does not work
+		var lib1 = new Library();
+		console.log("LIB1._TEST", lib1._test);
+		console.log("LIB1._CHAINABLE", lib1.chainable());  // function() {}
+
+		// Accessing privates from within functions works as expected
+		Library.fn.doSomething = function() {
+			console.log("THIS._TEST_5", this._test); // 5
+			this._settest(10);
+			console.log("THIS._TEST_10", this._test); // 10
+			console.log("CHAINABLE.TEST", this.chainable().test);  // function() {}
+			console.log("CHAINABLE._TEST", this.chainable()._test); // undefined
+		}
+		var lib2 = new Library();
+		lib2.doSomething();
+		console.log("PUBLIC PROPERTIES LIB2", lib2);
+
+	</script>
+	<body>
+		_wm
+	</body>
+</html>
